@@ -33,8 +33,24 @@ const googleBtn = document.getElementById('auth-google');
 const signOutBtn = document.getElementById('sign-out');
 const userEmailLabel = document.getElementById('user-email');
 
+const AUTH_ERROR_MESSAGES = {
+  'auth/invalid-email': 'That email address doesn\'t look valid.',
+  'auth/missing-email': 'Enter your email address.',
+  'auth/missing-password': 'Enter your password.',
+  'auth/weak-password': 'Password must be at least 6 characters.',
+  'auth/email-already-in-use': 'An account with this email already exists — try signing in instead.',
+  'auth/user-not-found': 'Incorrect email or password.',
+  'auth/wrong-password': 'Incorrect email or password.',
+  'auth/invalid-credential': 'Incorrect email or password.',
+  'auth/too-many-requests': 'Too many attempts — please wait a moment and try again.',
+  'auth/network-request-failed': 'Network error — check your connection and try again.',
+  'auth/popup-closed-by-user': 'Sign-in was cancelled.',
+  'auth/internal-error': 'That sign-in method isn\'t set up yet — please try a different option.',
+  'auth/operation-not-allowed': 'That sign-in method isn\'t enabled yet — please try a different option.',
+};
+
 function showError(err) {
-  authError.textContent = err.message || String(err);
+  authError.textContent = AUTH_ERROR_MESSAGES[err.code] || err.message || String(err);
 }
 
 function openPopover() {
@@ -46,6 +62,22 @@ function closePopover() {
   authPopover.hidden = true;
 }
 
+// Basic client-side validation so empty fields produce a clear message instead of
+// a confusing Firebase error code (e.g. auth/invalid-email for an empty string).
+function validCredentials() {
+  if (!authEmail.value.trim()) {
+    authError.textContent = 'Enter your email address.';
+    authEmail.focus();
+    return false;
+  }
+  if (!authPassword.value) {
+    authError.textContent = 'Enter your password.';
+    authPassword.focus();
+    return false;
+  }
+  return true;
+}
+
 openSignInBtn.addEventListener('click', () => {
   if (authPopover.hidden) openPopover();
   else closePopover();
@@ -55,10 +87,12 @@ authCloseBtn.addEventListener('click', closePopover);
 authForm.addEventListener('submit', (e) => {
   e.preventDefault();
   authError.textContent = '';
+  if (!validCredentials()) return;
   signIn(authEmail.value, authPassword.value).catch(showError);
 });
 authSignUpBtn.addEventListener('click', () => {
   authError.textContent = '';
+  if (!validCredentials()) return;
   signUp(authEmail.value, authPassword.value).catch(showError);
 });
 googleBtn.addEventListener('click', () => {
