@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.google.com; frame-src https://*.firebaseapp.com https://accounts.google.com"
+  />
+  <title>Tackl</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Tackl</h1>
+    <p class="subtitle">Prioritize what matters — the Eisenhower Matrix (Urgent-Important Decision Grid)</p>
+    <button id="sign-in-btn" class="corner-btn" type="button">Sign in</button>
+    <button id="sign-out" class="corner-btn" type="button" hidden>Sign out (<span id="user-email"></span>)</button>
+
+    <section id="auth-popover" class="auth-popover" hidden>
+      <form id="auth-form" class="auth-form">
+        <div class="auth-popover-head">
+          <h2>Sign in to Tackl</h2>
+          <button id="auth-close" type="button" class="auth-close-btn" aria-label="Close">×</button>
+        </div>
+        <input type="email" id="auth-email" placeholder="Email" autocomplete="email" required />
+        <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" required />
+        <p id="auth-error" class="auth-error"></p>
+        <div class="auth-actions">
+          <button id="auth-signin" type="submit">Sign in</button>
+          <button id="auth-signup" type="button">Create account</button>
+        </div>
+        <button id="auth-google" type="button" class="auth-google-btn">Sign in with Google</button>
+      </form>
+    </section>
+  </header>
+
+  <p id="guest-banner" class="guest-banner">Guest mode — tasks are saved on this device only. Sign in to save them to your account.</p>
+
+  <div id="app-view">
+  <div class="matrix-wrap">
+    <div class="axis-x">
+      <span class="axis-title">URGENCY</span>
+      <div class="axis-labels">
+        <span class="axis-pill">URGENT</span>
+        <span class="axis-pill">NOT URGENT</span>
+      </div>
+    </div>
+    <div class="matrix-body">
+      <div class="axis-y">
+        <span class="axis-title vertical">IMPORTANCE</span>
+        <div class="axis-labels vertical">
+          <span class="axis-pill vertical">IMPORTANT</span>
+          <span class="axis-pill vertical">NOT IMPORTANT</span>
+        </div>
+      </div>
+      <div class="matrix">
+        <section class="quadrant q1" data-important="1" data-urgent="1">
+          <div class="q-header">
+            <span class="corner-badge left">U</span>
+            <div class="q-titles">
+              <h2>Q1: DO FIRST</h2>
+              <p>Urgent &amp; Important</p>
+            </div>
+            <span class="corner-badge right">I</span>
+          </div>
+          <ul class="task-list" data-important="1" data-urgent="1"></ul>
+          <p class="q-footer">Act Immediately!</p>
+        </section>
+
+        <section class="quadrant q2" data-important="1" data-urgent="0">
+          <div class="q-header">
+            <span class="corner-badge left">N</span>
+            <div class="q-titles">
+              <h2>Q2: SCHEDULE</h2>
+              <p>Not Urgent &amp; Important</p>
+            </div>
+            <span class="corner-badge right">I</span>
+          </div>
+          <ul class="task-list" data-important="1" data-urgent="0"></ul>
+          <p class="q-footer">Designate time to work on these</p>
+        </section>
+
+        <section class="quadrant q3" data-important="0" data-urgent="1">
+          <div class="q-header">
+            <span class="corner-badge left">U</span>
+            <div class="q-titles">
+              <h2>Q3: DELEGATE</h2>
+              <p>Urgent &amp; Not Important</p>
+            </div>
+            <span class="corner-badge right">N</span>
+          </div>
+          <ul class="task-list" data-important="0" data-urgent="1"></ul>
+          <p class="q-footer">Find someone else to do these</p>
+        </section>
+
+        <section class="quadrant q4" data-important="0" data-urgent="0">
+          <div class="q-header">
+            <span class="corner-badge left">N</span>
+            <div class="q-titles">
+              <h2>Q4: ELIMINATE</h2>
+              <p>Not Urgent &amp; Not Important</p>
+            </div>
+            <span class="corner-badge right">N</span>
+          </div>
+          <ul class="task-list" data-important="0" data-urgent="0"></ul>
+          <p class="q-footer">Delete or reduce these completely</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="chat-log" id="chat-log"></div>
+    <form class="chat-input-row" id="chat-form">
+      <input
+        type="text"
+        id="chat-input"
+        placeholder="Type a task and press Return…"
+        autocomplete="off"
+      />
+    </form>
+  </div>
+  </div>
+
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

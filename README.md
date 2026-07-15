@@ -1,0 +1,119 @@
+# Tackl
+
+A multi-user SaaS task manager for prioritizing your work with the
+**[Eisenhower Matrix](https://en.wikipedia.org/wiki/Time_management#Eisenhower_method)** — the "Urgent–Important" decision grid popularized by Dwight D. Eisenhower.
+
+Instead of filling out forms, you add tasks through a simple chat box: type what you need to do,
+answer two quick questions, and the app automatically files the task into the right quadrant with a
+priority number.
+
+Tackl runs as a web app on **Google Cloud Run**, with per-user accounts via **Firebase
+Authentication** and task data stored in **Firestore**.
+
+## What it does
+
+Every task is sorted into one of four quadrants based on whether it's **important** and/or **urgent**:
+
+| Quadrant | Important? | Urgent? | What to do |
+| --- | --- | --- | --- |
+| **Q1 — Do First** | Yes | Yes | Act on these immediately |
+| **Q2 — Schedule** | Yes | No | Designate time to work on these |
+| **Q3 — Delegate** | No | Yes | Find someone else to do these |
+| **Q4 — Eliminate** | No | No | Delete or reduce these completely |
+
+## Architecture
+
+- **Frontend** (`src/renderer/`): plain HTML/CSS/JS, no build step. Firebase Web SDK is imported
+  directly as an ES module from Google's CDN for sign-in; `api.js` talks to the backend over `fetch`,
+  attaching the signed-in user's Firebase ID token.
+- **Backend** (`src/server.js`): an Express server that serves the frontend as static files and
+  exposes a `/api/tasks` REST API. Every request is authenticated by verifying the caller's Firebase
+  ID token with the Firebase Admin SDK.
+- **Data** (`src/db.js`): Firestore, one `users/{uid}/tasks/{taskId}` collection per user. Firestore
+  security rules (`firestore.rules`) deny all direct client access — only the server (via the Admin
+  SDK) reads or writes data, after checking the request's uid.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) 20 or later.
+- A [Firebase](https://console.firebase.google.com/) project with **Firestore** and
+  **Authentication** (Email/Password and, optionally, Google) enabled.
+- The [gcloud CLI](https://cloud.google.com/sdk/docs/install) if you're deploying to Cloud Run.
+
+## Local development
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Set up Firebase for local use:
+   - In the [Firebase console](https://console.firebase.google.com/), create (or pick) a project,
+     enable **Firestore** (Native mode) and **Authentication** (enable the Email/Password and Google
+     sign-in providers).
+   - Under Project Settings → Your apps, create a Web app and copy its config into
+     `src/renderer/firebase-config.js` (these values are not secret — they identify the project, they
+     don't grant access).
+   - Authenticate your machine so the Admin SDK can reach Firestore/Auth:
+
+     ```bash
+     gcloud auth application-default login --project YOUR_PROJECT_ID
+     ```
+
+3. Start the server:
+
+   ```bash
+   npm run dev
+   ```
+
+   Then open <http://localhost:8080>.
+
+> **Note:** The first time the app queries tasks, Firestore may report that a composite index is
+> needed for the `getAllTasks` query (sorted by important, urgent, completed, position). Firestore's
+> error message includes a direct console link to create it — click it once and the index builds in
+> the background.
+
+## Deploy to Cloud Run
+
+With the [gcloud CLI](https://cloud.google.com/sdk/docs/install) authenticated and a GCP project
+selected:
+
+```bash
+gcloud run deploy tackl --source . --region YOUR_REGION --allow-unauthenticated
+```
+
+This builds the included `Dockerfile` and deploys it — no separate container registry step needed.
+The Cloud Run service's attached service account needs the **Cloud Datastore User** (or Firebase
+Admin) IAM role so the Admin SDK can reach Firestore/Auth via Application Default Credentials; no
+credentials file is required on Cloud Run itself.
+
+Deploy the Firestore security rules once (or whenever `firestore.rules` changes) with the
+[Firebase CLI](https://firebase.google.com/docs/cli):
+
+```bash
+firebase deploy --only firestore:rules --project YOUR_PROJECT_ID
+```
+
+## Usage
+
+1. Sign in (or create an account) on the sign-in screen.
+2. Type a task in the chat box at the bottom and press **Enter**.
+3. Answer **"Is this important?"** and **"Is this urgent?"** with the **Yes / No** buttons.
+4. The task lands in the matching quadrant with a priority number.
+
+Drag tasks to reorder them within a quadrant or to move them between quadrants. Hover over a task to
+reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll when they fill up.
+
+## Project structure
+
+- `src/server.js` — Express app: static file serving, `/api/tasks` REST routes, Firebase ID token
+  verification
+- `src/db.js` — Firestore data layer, scoped per user: CRUD plus quadrant move/reorder
+- `src/renderer/` — frontend (HTML/CSS/JS)
+  - `auth.js` — Firebase Authentication (sign in/up/out, Google sign-in)
+  - `api.js` — `fetch`-based client for the `/api/tasks` REST API
+  - `firebase-config.js` — Firebase web app config (fill in with your project's values)
+  - `renderer.js` — auth gating, chat entry flow, drag-and-drop matrix UI
+- `Dockerfile` — container image used for Cloud Run deploys
+- `firestore.rules` / `firebase.json` — Firestore security rules (deny direct client access)

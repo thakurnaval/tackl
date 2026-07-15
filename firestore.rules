@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All reads/writes go through the server (Firebase Admin SDK), which bypasses
+    // these rules and enforces per-user access itself after verifying the caller's
+    // Firebase Auth ID token. Direct client access to Firestore is not used, so it
+    // is denied here as defense in depth.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,20 @@
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Env files
+.env
+.env.local
+
+# Firebase
+serviceAccountKey*.json
+.firebase/
+
+# Logs
+*.log

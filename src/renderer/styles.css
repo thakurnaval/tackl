@@ -1,0 +1,503 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --q1-bg: #e8836b;
+  --q1-dark: #c0392b;
+  --q2-bg: #a3cf8e;
+  --q2-dark: #4a7c3f;
+  --q3-bg: #f0c95c;
+  --q3-dark: #b8860b;
+  --q4-bg: #a8b4bd;
+  --q4-dark: #5d6d7a;
+  --pill-bg: #c9c9c9;
+  --ink: #1a1a1a;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f4f2ee;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.app-header {
+  text-align: center;
+}
+
+.app-header h1 {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #444;
+}
+
+/* ---------- Matrix layout with axes ---------- */
+
+.matrix-wrap {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.axis-x {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 56px; /* offset for y-axis */
+  gap: 4px;
+}
+
+.axis-title {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.axis-labels {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}
+
+.axis-pill {
+  flex: 1;
+  text-align: center;
+  background: var(--pill-bg);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 3px 0;
+  letter-spacing: 1px;
+}
+
+.matrix-body {
+  flex: 1 1 0;
+  display: flex;
+  min-height: 0;
+  margin-top: 6px;
+}
+
+.axis-y {
+  width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.axis-title.vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.axis-labels.vertical {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+  justify-content: stretch;
+}
+
+.axis-pill.vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  font-size: 12px;
+}
+
+.matrix {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  min-height: 0;
+}
+
+/* ---------- Quadrants ---------- */
+
+.quadrant {
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 6px 10px 8px;
+  position: relative;
+}
+
+.q1 { background: var(--q1-bg); }
+.q2 { background: var(--q2-bg); }
+.q3 { background: var(--q3-bg); }
+.q4 { background: var(--q4-bg); }
+
+.q-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.q-titles {
+  text-align: center;
+  flex: 1;
+}
+
+.q-titles h2 {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.q-titles p {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.corner-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.q1 .corner-badge { background: var(--q1-dark); }
+.q2 .corner-badge { background: var(--q2-dark); }
+.q3 .corner-badge { background: var(--q3-dark); }
+.q4 .corner-badge { background: var(--q4-dark); }
+
+.q-footer {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding-top: 4px;
+}
+
+/* ---------- Task lists ---------- */
+
+.task-list {
+  flex: 1 1 0;
+  list-style: none;
+  overflow-y: auto;
+  min-height: 40px;
+  margin-top: 4px;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.task-list.drag-over {
+  outline: 2px dashed rgba(0, 0, 0, 0.35);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.task-card {
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 8px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: grab;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+}
+
+.task-card.dragging {
+  opacity: 0.45;
+}
+
+.task-card.completed .task-text {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.task-num {
+  font-weight: 800;
+  font-size: 12px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.task-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.task-text input {
+  width: 100%;
+  font: inherit;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.task-card:hover .task-actions {
+  opacity: 1;
+}
+
+.task-actions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.task-actions button:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- Chat ---------- */
+
+.chat {
+  flex: 0 0 auto;
+  border: 1px solid #d5d0c8;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 190px;
+}
+
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.msg {
+  max-width: 75%;
+  padding: 6px 11px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: #2f6fed;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.bot {
+  align-self: flex-start;
+  background: #ececec;
+  border-bottom-left-radius: 4px;
+}
+
+.msg-buttons {
+  align-self: flex-start;
+  display: flex;
+  gap: 8px;
+}
+
+.msg-buttons button {
+  padding: 4px 18px;
+  border-radius: 999px;
+  border: 1px solid #2f6fed;
+  background: #fff;
+  color: #2f6fed;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.msg-buttons button:hover {
+  background: #2f6fed;
+  color: #fff;
+}
+
+.msg-buttons button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chat-input-row {
+  border-top: 1px solid #e2ddd5;
+  padding: 8px 10px;
+}
+
+#chat-input {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  outline: none;
+}
+
+#chat-input:focus {
+  border-color: #2f6fed;
+}
+
+/* ---------- Auth ---------- */
+
+[hidden] {
+  display: none !important;
+}
+
+.app-header {
+  position: relative;
+}
+
+.corner-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Small popover anchored under the sign-in button, not a full-page overlay */
+.auth-popover {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 10;
+  width: 280px;
+  background: #fff;
+  border: 1px solid #e2ddd5;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.auth-popover-head h2 {
+  font-size: 15px;
+}
+
+.auth-close-btn {
+  border: none;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+
+.auth-form input {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: #2f6fed;
+}
+
+.auth-error {
+  color: #c0392b;
+  font-size: 12px;
+  min-height: 14px;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-actions button,
+.auth-google-btn {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 13px;
+  background: #f4f2ee;
+  cursor: pointer;
+}
+
+.auth-actions #auth-signin {
+  background: #2f6fed;
+  color: #fff;
+  border-color: #2f6fed;
+}
+
+.auth-google-btn {
+  width: 100%;
+}
+
+.guest-banner {
+  text-align: center;
+  font-size: 12px;
+  color: #6b5b1e;
+  background: #f7edcf;
+  border: 1px solid #e0cf8a;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+#app-view {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 8px;
+}
