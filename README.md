@@ -76,11 +76,14 @@ Every task is sorted into one of four quadrants based on whether it's **importan
 
 ## Deploy to Cloud Run
 
-With the [gcloud CLI](https://cloud.google.com/sdk/docs/install) authenticated and a GCP project
-selected:
+**Automatic (recommended):** every push to `main` builds and deploys via the GitHub Actions
+workflow at `.github/workflows/deploy.yml` — see "CI/CD" below for one-time setup.
+
+**Manual:** with the [gcloud CLI](https://cloud.google.com/sdk/docs/install) authenticated and the
+project selected:
 
 ```bash
-gcloud run deploy tackl --source . --region YOUR_REGION --allow-unauthenticated
+gcloud run deploy tackl --source . --region asia-southeast1 --allow-unauthenticated
 ```
 
 This builds the included `Dockerfile` and deploys it — no separate container registry step needed.
@@ -92,8 +95,41 @@ Deploy the Firestore security rules once (or whenever `firestore.rules` changes)
 [Firebase CLI](https://firebase.google.com/docs/cli):
 
 ```bash
-firebase deploy --only firestore:rules --project YOUR_PROJECT_ID
+firebase deploy --only firestore:rules --project navalthakur
 ```
+
+## CI/CD
+
+Pushes to `main` are built and deployed to Cloud Run automatically by
+`.github/workflows/deploy.yml`, authenticating to GCP via **Workload Identity Federation** — no
+service account key is stored in GitHub.
+
+One-time setup (only needs to be done once, ever, by someone with owner/editor access to the GCP
+project):
+
+1. Open [Cloud Shell](https://shell.cloud.google.com) (already authenticated, no local install
+   needed) and run:
+
+   ```bash
+   bash scripts/setup-gcp-ci.sh
+   ```
+
+   This enables the required APIs, creates the `tackl` Artifact Registry repo, creates a
+   `github-deployer` service account scoped to this one repo, and sets up the Workload Identity
+   Pool/Provider trust between GitHub Actions and GCP.
+
+2. It prints two values at the end — add them as **repository variables** (Settings → Secrets and
+   variables → Actions → Variables) in the GitHub repo:
+   - `GCP_WORKLOAD_IDENTITY_PROVIDER`
+   - `GCP_SERVICE_ACCOUNT`
+
+3. Also deploy the Firestore security rules once (they're not part of the container image):
+
+   ```bash
+   firebase deploy --only firestore:rules --project navalthakur
+   ```
+
+After that, every push to `main` deploys automatically — no further setup needed.
 
 ## Usage
 
@@ -117,3 +153,5 @@ reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll
   - `renderer.js` — auth gating, chat entry flow, drag-and-drop matrix UI
 - `Dockerfile` — container image used for Cloud Run deploys
 - `firestore.rules` / `firebase.json` — Firestore security rules (deny direct client access)
+- `.github/workflows/deploy.yml` — CI/CD: builds and deploys to Cloud Run on every push to `main`
+- `scripts/setup-gcp-ci.sh` — one-time script to set up the CI/CD pipeline's GCP-side resources
