@@ -16,6 +16,9 @@ Authentication** and task data stored in **Firestore**.
 > what's shipped, what's planned (Gmail delegation, Calendar scheduling, Google Tasks backup), and
 > the broader roadmap toward a full product (billing, teams, notifications, legal, etc.). Keep it
 > updated as the single source of truth when scope changes.
+>
+> **Diagrams:** see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system architecture,
+> user flow, and data flow diagrams.
 
 ## What it does
 
@@ -165,6 +168,7 @@ reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll
 ## Project structure
 
 - `PRODUCT_SPEC.md` — master product specification, requirements, and roadmap
+- `docs/ARCHITECTURE.md` — architecture, user flow, and data flow diagrams
 - `src/server.js` — Express app: static file serving, `/api/tasks` REST routes, Firebase ID token
   verification
 - `src/db.js` — Firestore data layer, scoped per user: CRUD plus quadrant move/reorder

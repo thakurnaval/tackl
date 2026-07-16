@@ -8,6 +8,9 @@ Status legend: `[x]` shipped · `[~]` in progress / partially done · `[ ]` not 
 
 **Live at:** https://tackl.nthakur.com
 
+**Diagrams:** see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for system architecture, user
+flow, and data flow diagrams.
+
 ## 1. Product vision
 
 Tackl is a multi-user SaaS task manager built around the **Eisenhower Matrix** (Urgent/Important
