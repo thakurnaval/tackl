@@ -177,6 +177,7 @@ reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll
   - `api.js` — `fetch`-based client for the `/api/tasks` REST API
   - `firebase-config.js` — Firebase web app config (fill in with your project's values)
   - `renderer.js` — auth gating, chat entry flow, drag-and-drop matrix UI
+  - `privacy.html` / `terms.html` — Privacy Policy and Terms of Service (static pages)
 - `Dockerfile` — container image used for Cloud Run deploys
 - `firestore.rules` / `firebase.json` — Firestore security rules (deny direct client access)
 - `.github/workflows/deploy.yml` — CI/CD: builds and deploys to Cloud Run on every push to `main`

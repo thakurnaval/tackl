@@ -500,6 +500,18 @@ body {
   width: 100%;
 }
 
+.app-footer {
+  position: fixed;
+  bottom: 2px;
+  right: 6px;
+  font-size: 10px;
+  color: #aaa;
+}
+
+.app-footer a {
+  color: #aaa;
+}
+
 .guest-banner {
   text-align: center;
   font-size: 12px;

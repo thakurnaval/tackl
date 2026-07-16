@@ -115,8 +115,9 @@ needs. Roughly ordered by how soon each would actually bite.
 
 ### 4.1 Account & auth
 - [ ] Password reset flow (only sign in/sign up/Google exist today)
-- [ ] Account deletion that also deletes the user's Firestore data (today, deleting the Firebase
-      Auth user leaves `users/{uid}/tasks/*` orphaned in Firestore)
+- [x] Account deletion that also deletes the user's Firestore data — `DELETE /api/account`
+      (`src/server.js`, `src/db.js`), triggered by the "Delete account" link near sign-out.
+      Verified end-to-end: task data and the Firebase Auth user are both actually gone afterward.
 - [ ] Email verification (optional, but standard)
 
 ### 4.2 Security & reliability
@@ -134,8 +135,13 @@ needs. Roughly ordered by how soon each would actually bite.
 - [ ] Firestore read/write cost monitoring as usage grows
 
 ### 4.4 Legal & compliance
-- [ ] Privacy Policy
-- [ ] Terms of Service
+- [x] Privacy Policy — live at [`/privacy.html`](https://tackl.nthakur.com/privacy.html)
+      (`src/renderer/privacy.html`). Drafted to accurately reflect actual data practices; needs a
+      legal review before being fully relied on, and the `support@nthakur.com` contact address needs
+      to actually exist.
+- [x] Terms of Service — live at [`/terms.html`](https://tackl.nthakur.com/terms.html)
+      (`src/renderer/terms.html`). Same caveat — legal review still needed, and §10 (governing law)
+      is a placeholder that needs a real jurisdiction filled in.
 - [ ] GDPR/CCPA considerations if serving EU/CA users
 - [ ] Required before pursuing full Google OAuth verification (moves Delegate/Schedule/Backup out of
       the 100-test-user Testing-mode limit in §3.6)

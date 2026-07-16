@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'" />
+  <title>Privacy Policy — Tackl</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="stylesheet" href="legal.css" />
+</head>
+<body>
+  <header class="legal-header"><a href="/">Tackl</a></header>
+
+  <h1>Privacy Policy</h1>
+  <p class="legal-meta">Last updated: 16 July 2026</p>
+
+  <p>
+    This policy describes what data Tackl ("we," "us") collects when you use the app at
+    <a href="https://tackl.nthakur.com">tackl.nthakur.com</a>, why, and what control you have over
+    it. We built Tackl to store as little as possible, and only what the app actually needs to
+    work.
+  </p>
+
+  <h2>1. What we collect</h2>
+  <p><strong>If you use Tackl without an account (guest mode):</strong> nothing is sent to us. Your
+  tasks are stored only in your browser's local storage, on your device. We have no way to see, back
+  up, or recover this data — clearing your browser data deletes it permanently.</p>
+  <p><strong>If you create an account:</strong></p>
+  <ul>
+    <li><strong>Account identity</strong> — your email address, and a password hash (email/password
+    sign-in) or your Google account's basic profile (name, email, profile photo — Google sign-in).
+    Handled entirely by Firebase Authentication; we never see or store your password in plain text,
+    and email/password sign-in and Google sign-in are the only two ways to create an account.</li>
+    <li><strong>Task data</strong> — the text of tasks you create, their quadrant (important/urgent),
+    completion status, and ordering. This is what makes the app work.</li>
+    <li><strong>If you use optional Google integrations</strong> (delegating a task by email, scheduling
+    a task on Google Calendar, or backing up your list to Google Tasks) — these features, where they
+    call a Google API, request a short-lived access token directly from your browser to Google; we
+    never see or store that token. We only store the small result of a successful action on the task
+    itself (e.g. a Calendar event link, or that a task was delegated to an email address you typed
+    in). Delegation via email uses your device's own mail app (a "mailto:" link) — we never see the
+    email content or know whether it was actually sent.</li>
+  </ul>
+
+  <h2>2. How we use it</h2>
+  <p>Solely to operate the app: authenticating you, storing and displaying your tasks, and (for the
+  optional integrations above) recording that an action happened. We do not sell your data, use it
+  for advertising, or share it with anyone except the service providers below, who process it only
+  to help us run Tackl.</p>
+
+  <h2>3. Who else touches your data</h2>
+  <ul>
+    <li><strong>Firebase Authentication</strong> (Google) — manages sign-in and issues the tokens
+    that prove who you are to our server.</li>
+    <li><strong>Cloud Firestore</strong> (Google Cloud) — stores your task data, in a database
+    region located in Singapore (<code>asia-southeast1</code>).</li>
+    <li><strong>Google Cloud Run</strong> — hosts the Tackl server itself.</li>
+    <li><strong>Google Calendar API / Google Tasks API</strong> (only if you use those optional
+    features) — called directly from your browser using your own Google account's permission, not
+    routed through our server.</li>
+  </ul>
+  <p>We don't use any analytics, advertising, or tracking services. We don't use tracking cookies —
+  your sign-in session is kept by Firebase using your browser's local storage, not a cookie.</p>
+
+  <h2>4. Security</h2>
+  <p>Your task data is never accessible directly from the browser — our database's security rules
+  deny all direct client access. Every read or write goes through our server, which first verifies
+  your identity token before touching anything, and only ever touches <em>your</em> data.</p>
+
+  <h2>5. How long we keep it</h2>
+  <p>For as long as your account exists. If you don't have an account (guest mode), only your own
+  browser decides that.</p>
+
+  <h2>6. Your rights</h2>
+  <p>You can delete your entire account and all associated task data yourself, at any time, from
+  within the app (the "Delete account" link next to Sign out) — this is immediate and permanent, and
+  removes both your account and every task you've stored with us. You can also request a copy or
+  deletion of your data by contacting us (below).</p>
+
+  <h2>7. Children's privacy</h2>
+  <p>Tackl isn't directed at children, and we don't knowingly collect data from anyone under 13.</p>
+
+  <h2>8. Changes to this policy</h2>
+  <p>If this policy changes in a material way, we'll update the date at the top of this page.</p>
+
+  <h2>9. Contact</h2>
+  <p>Questions about this policy or your data: <a href="mailto:support@nthakur.com">support@nthakur.com</a></p>
+
+  <p class="legal-footer">
+    <a href="/">← Back to Tackl</a> · <a href="/terms.html">Terms of Service</a>
+  </p>
+</body>
+</html>
