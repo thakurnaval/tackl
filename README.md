@@ -1,5 +1,7 @@
 # Tackl
 
+**Live at: https://tackl.nthakur.com**
+
 A multi-user SaaS task manager for prioritizing your work with the
 **[Eisenhower Matrix](https://en.wikipedia.org/wiki/Time_management#Eisenhower_method)** — the "Urgent–Important" decision grid popularized by Dwight D. Eisenhower.
 
@@ -95,6 +97,20 @@ This builds the included `Dockerfile` and deploys it — no separate container r
 The Cloud Run service's attached service account needs the **Cloud Datastore User** (or Firebase
 Admin) IAM role so the Admin SDK can reach Firestore/Auth via Application Default Credentials; no
 credentials file is required on Cloud Run itself.
+
+### Custom domain
+
+Tackl is served at `tackl.nthakur.com` via a Cloud Run domain mapping, done once with:
+
+```bash
+gcloud beta run domain-mappings create --service=tackl --domain=tackl.nthakur.com \
+  --region=asia-southeast1 --project=navalthakur
+```
+
+Then add the CNAME record it asks for (`tackl` → `ghs.googlehosted.com.`) at your DNS provider.
+Google auto-provisions the TLS certificate once DNS propagates — no further action needed. The
+domain also needs to be added to Firebase's authorized domains list (Authentication → Settings →
+Authorized domains) or sign-in will fail with `auth/unauthorized-domain`.
 
 Deploy the Firestore security rules once (or whenever `firestore.rules` changes) with the
 [Firebase CLI](https://firebase.google.com/docs/cli):

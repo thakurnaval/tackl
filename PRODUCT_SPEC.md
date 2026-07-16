@@ -6,6 +6,8 @@ in chat history.
 
 Status legend: `[x]` shipped · `[~]` in progress / partially done · `[ ]` not started.
 
+**Live at:** https://tackl.nthakur.com
+
 ## 1. Product vision
 
 Tackl is a multi-user SaaS task manager built around the **Eisenhower Matrix** (Urgent/Important
@@ -29,12 +31,13 @@ action, not just a label:
 - [x] Per-user data in Firestore (`users/{uid}/tasks/{taskId}`), server-mediated only
       (`src/db.js`, `src/server.js`)
 - [x] Firestore security rules deny all direct client access (`firestore.rules`)
-- [x] Hosting on Google Cloud Run (project `navalthakur`, region `asia-southeast1`)
+- [x] Hosting on Google Cloud Run (project `navalthakur`, region `asia-southeast1`), service URL
+      `https://tackl-54h4b3ir2q-as.a.run.app`
 - [x] CI/CD: GitHub Actions → Cloud Run on every push to `main`, keyless via Workload Identity
       Federation (`.github/workflows/deploy.yml`, `scripts/setup-gcp-ci.sh`)
 - [x] Meaningful auth error messages (no raw Firebase error codes shown to users)
-- [~] Custom domain `tackl.nthakur.com` — Cloud Run domain mapping created, waiting on a CNAME DNS
-      record to finish propagating
+- [x] Custom domain `tackl.nthakur.com` — Cloud Run domain mapping live, DNS propagated, TLS
+      certificate provisioned. This is the canonical URL going forward.
 - [ ] Google sign-in provider — needs OAuth consent screen test users added for anyone besides the
       project owner while in Testing mode (see §4)
 
