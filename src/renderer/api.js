@@ -26,4 +26,5 @@ export const api = {
   deleteTask: (id) => request('DELETE', `/api/tasks/${id}`),
   moveTask: (id, important, urgent, newIndex) =>
     request('PATCH', `/api/tasks/${id}/move`, { important, urgent, newIndex }),
+  deleteAccount: () => request('DELETE', '/api/account'),
 };

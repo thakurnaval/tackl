@@ -82,6 +82,18 @@ async function deleteTask(uid, id) {
   await tasksRef(uid).doc(id).delete();
 }
 
+// Deletes every task doc for a user — used when the account itself is deleted.
+// Firestore batches are capped at 500 writes, so chunk in case of a very large list.
+async function deleteAllTasks(uid) {
+  const snap = await tasksRef(uid).get();
+  const chunkSize = 500;
+  for (let i = 0; i < snap.docs.length; i += chunkSize) {
+    const batch = firestore.batch();
+    snap.docs.slice(i, i + chunkSize).forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+}
+
 // Move a task to a quadrant at a specific index; re-sequences both quadrants.
 async function moveTask(uid, id, important, urgent, newIndex) {
   const imp = important ? 1 : 0;
@@ -148,5 +160,6 @@ module.exports = {
   updateTaskText,
   setCompleted,
   deleteTask,
+  deleteAllTasks,
   moveTask,
 };

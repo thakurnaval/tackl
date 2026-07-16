@@ -400,6 +400,22 @@ body {
   cursor: pointer;
 }
 
+.delete-account-link {
+  position: absolute;
+  top: 30px;
+  right: 4px;
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 10px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.delete-account-link:hover {
+  color: #c0392b;
+}
+
 /* Small popover anchored under the sign-in button, not a full-page overlay */
 .auth-popover {
   position: absolute;

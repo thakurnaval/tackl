@@ -31,6 +31,7 @@ const authSubmitBtn = document.getElementById('auth-signin');
 const authSignUpBtn = document.getElementById('auth-signup');
 const googleBtn = document.getElementById('auth-google');
 const signOutBtn = document.getElementById('sign-out');
+const deleteAccountBtn = document.getElementById('delete-account-btn');
 const userEmailLabel = document.getElementById('user-email');
 
 const AUTH_ERROR_MESSAGES = {
@@ -101,6 +102,19 @@ googleBtn.addEventListener('click', () => {
 });
 signOutBtn.addEventListener('click', () => signOutUser());
 
+deleteAccountBtn.addEventListener('click', async () => {
+  const confirmed = confirm(
+    'Delete your Tackl account? This permanently deletes all of your tasks and cannot be undone.'
+  );
+  if (!confirmed) return;
+  try {
+    await remoteApi.deleteAccount();
+    await signOutUser();
+  } catch (err) {
+    alert(`Couldn't delete account: ${err.message || err}`);
+  }
+});
+
 // Uploads any guest-mode tasks (made before signing in) into the newly-signed-in
 // account's Firestore collection, preserving quadrant/order and completed state.
 async function migrateGuestTasks() {
@@ -118,6 +132,7 @@ watchAuthState(async (user) => {
     closePopover();
     openSignInBtn.hidden = true;
     signOutBtn.hidden = false;
+    deleteAccountBtn.hidden = false;
     guestBanner.hidden = true;
     userEmailLabel.textContent = user.email || user.displayName || '';
     authEmail.value = '';
@@ -128,6 +143,7 @@ watchAuthState(async (user) => {
   } else {
     openSignInBtn.hidden = false;
     signOutBtn.hidden = true;
+    deleteAccountBtn.hidden = true;
     guestBanner.hidden = false;
     userEmailLabel.textContent = '';
     store = localStore;

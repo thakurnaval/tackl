@@ -64,6 +64,13 @@ api.delete('/tasks/:id', wrap(async (req, res) => {
   res.sendStatus(204);
 }));
 
+// Deletes all of the caller's task data, then their Firebase Auth account itself.
+api.delete('/account', wrap(async (req, res) => {
+  await db.deleteAllTasks(req.uid);
+  await admin.auth().deleteUser(req.uid);
+  res.sendStatus(204);
+}));
+
 app.use('/api', api);
 
 app.use((err, req, res, _next) => {
