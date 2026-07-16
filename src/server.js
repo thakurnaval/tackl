@@ -64,6 +64,13 @@ api.delete('/tasks/:id', wrap(async (req, res) => {
   res.sendStatus(204);
 }));
 
+// Persists the small result of a Google integration action (delegate/schedule/backup)
+// onto a task. Field whitelist is enforced in db.updateTaskMeta.
+api.patch('/tasks/:id/meta', wrap(async (req, res) => {
+  await db.updateTaskMeta(req.uid, req.params.id, req.body);
+  res.sendStatus(204);
+}));
+
 // Deletes all of the caller's task data, then their Firebase Auth account itself.
 api.delete('/account', wrap(async (req, res) => {
   await db.deleteAllTasks(req.uid);

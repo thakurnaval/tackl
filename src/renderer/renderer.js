@@ -8,7 +8,9 @@ import {
   signUp,
   signInWithGoogle,
   signOutUser,
+  isGoogleUser,
 } from './auth.js';
+import { createCalendarEvent, backupTasksToGoogleTasks } from './google-api.js';
 
 const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('chat-form');
@@ -32,6 +34,7 @@ const authSignUpBtn = document.getElementById('auth-signup');
 const googleBtn = document.getElementById('auth-google');
 const signOutBtn = document.getElementById('sign-out');
 const deleteAccountBtn = document.getElementById('delete-account-btn');
+const backupBtn = document.getElementById('backup-btn');
 const userEmailLabel = document.getElementById('user-email');
 
 const AUTH_ERROR_MESSAGES = {
@@ -115,6 +118,129 @@ deleteAccountBtn.addEventListener('click', async () => {
   }
 });
 
+// ---------- Google integrations: Delegate / Schedule / Backup ----------
+
+const delegatePopover = document.getElementById('delegate-popover');
+const delegateEmail = document.getElementById('delegate-email');
+const delegateNote = document.getElementById('delegate-note');
+const delegateError = document.getElementById('delegate-error');
+const delegateCloseBtn = document.getElementById('delegate-close');
+const delegateSendBtn = document.getElementById('delegate-send');
+
+const schedulePopover = document.getElementById('schedule-popover');
+const scheduleDatetime = document.getElementById('schedule-datetime');
+const scheduleError = document.getElementById('schedule-error');
+const scheduleCloseBtn = document.getElementById('schedule-close');
+const scheduleSaveBtn = document.getElementById('schedule-save');
+
+let activeTask = null; // the task currently targeted by an open popover
+
+function openDelegatePopover(task) {
+  activeTask = task;
+  delegateEmail.value = '';
+  delegateNote.value = '';
+  delegateError.textContent = '';
+  delegatePopover.hidden = false;
+  delegateEmail.focus();
+}
+
+function closeDelegatePopover() {
+  delegatePopover.hidden = true;
+  activeTask = null;
+}
+
+function openSchedulePopover(task) {
+  if (!isGoogleUser()) {
+    addMsg('Schedule needs a Google account — sign in with Google to use it.', 'bot');
+    return;
+  }
+  activeTask = task;
+  scheduleDatetime.value = '';
+  scheduleError.textContent = '';
+  schedulePopover.hidden = false;
+  scheduleDatetime.focus();
+}
+
+function closeSchedulePopover() {
+  schedulePopover.hidden = true;
+  activeTask = null;
+}
+
+delegateCloseBtn.addEventListener('click', closeDelegatePopover);
+scheduleCloseBtn.addEventListener('click', closeSchedulePopover);
+
+delegateSendBtn.addEventListener('click', async () => {
+  const email = delegateEmail.value.trim();
+  if (!email) {
+    delegateError.textContent = 'Enter a recipient email address.';
+    return;
+  }
+  const task = activeTask;
+  const subject = `Task: ${task.text}`;
+  const body = delegateNote.value.trim()
+    ? `${delegateNote.value.trim()}\n\n---\n${task.text}`
+    : task.text;
+  const mailtoUrl =
+    `mailto:${encodeURIComponent(email)}` +
+    `?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(mailtoUrl, '_blank');
+
+  await store.updateTaskMeta(task.id, {
+    delegatedTo: email,
+    delegatedAt: new Date().toISOString(),
+  });
+  closeDelegatePopover();
+  await refresh();
+});
+
+scheduleSaveBtn.addEventListener('click', async () => {
+  const value = scheduleDatetime.value;
+  if (!value) {
+    scheduleError.textContent = 'Pick a date and time.';
+    return;
+  }
+  const task = activeTask;
+  const start = new Date(value);
+  const end = new Date(start.getTime() + 30 * 60 * 1000); // default 30-minute block
+  scheduleError.textContent = '';
+  scheduleSaveBtn.disabled = true;
+  try {
+    const { id: calendarEventId, htmlLink: calendarEventLink } = await createCalendarEvent(
+      task.text,
+      start.toISOString(),
+      end.toISOString()
+    );
+    await store.updateTaskMeta(task.id, {
+      calendarEventId,
+      calendarEventLink,
+      scheduledAt: start.toISOString(),
+    });
+    closeSchedulePopover();
+    await refresh();
+  } catch (err) {
+    scheduleError.textContent = err.message || String(err);
+  } finally {
+    scheduleSaveBtn.disabled = false;
+  }
+});
+
+backupBtn.addEventListener('click', async () => {
+  if (!isGoogleUser()) return;
+  backupBtn.disabled = true;
+  try {
+    const tasks = await store.getAllTasks();
+    const createdIds = await backupTasksToGoogleTasks(tasks);
+    for (const [taskId, googleTaskId] of Object.entries(createdIds)) {
+      await store.updateTaskMeta(taskId, { googleTaskId });
+    }
+    addMsg(`Backed up ${tasks.length} task(s) to Google Tasks ("Tackl" list).`, 'bot');
+  } catch (err) {
+    addMsg(`Backup failed: ${err.message || err}`, 'bot');
+  } finally {
+    backupBtn.disabled = false;
+  }
+});
+
 // Uploads any guest-mode tasks (made before signing in) into the newly-signed-in
 // account's Firestore collection, preserving quadrant/order and completed state.
 async function migrateGuestTasks() {
@@ -133,6 +259,7 @@ watchAuthState(async (user) => {
     openSignInBtn.hidden = true;
     signOutBtn.hidden = false;
     deleteAccountBtn.hidden = false;
+    backupBtn.hidden = !isGoogleUser();
     guestBanner.hidden = true;
     userEmailLabel.textContent = user.email || user.displayName || '';
     authEmail.value = '';
@@ -144,6 +271,7 @@ watchAuthState(async (user) => {
     openSignInBtn.hidden = false;
     signOutBtn.hidden = true;
     deleteAccountBtn.hidden = true;
+    backupBtn.hidden = true;
     guestBanner.hidden = false;
     userEmailLabel.textContent = '';
     store = localStore;
@@ -255,6 +383,16 @@ function makeCard(task, index) {
   editBtn.textContent = '✎';
   editBtn.addEventListener('click', () => startEdit(li, text, task));
 
+  const delegateBtn = document.createElement('button');
+  delegateBtn.title = task.delegatedTo ? `Delegated to ${task.delegatedTo}` : 'Delegate';
+  delegateBtn.textContent = '✉';
+  delegateBtn.addEventListener('click', () => openDelegatePopover(task));
+
+  const scheduleBtn = document.createElement('button');
+  scheduleBtn.title = task.calendarEventLink ? 'Scheduled on Calendar' : 'Schedule';
+  scheduleBtn.textContent = '📅';
+  scheduleBtn.addEventListener('click', () => openSchedulePopover(task));
+
   const delBtn = document.createElement('button');
   delBtn.title = 'Delete';
   delBtn.textContent = '✕';
@@ -263,8 +401,29 @@ function makeCard(task, index) {
     await refresh();
   });
 
-  actions.append(doneBtn, editBtn, delBtn);
+  actions.append(doneBtn, editBtn, delegateBtn, scheduleBtn, delBtn);
   li.append(num, text, actions);
+
+  if (task.delegatedTo || task.calendarEventLink) {
+    const badges = document.createElement('span');
+    badges.className = 'task-badges';
+    if (task.delegatedTo) {
+      const b = document.createElement('span');
+      b.className = 'task-badge';
+      b.textContent = `✉ ${task.delegatedTo}`;
+      badges.appendChild(b);
+    }
+    if (task.calendarEventLink) {
+      const b = document.createElement('a');
+      b.className = 'task-badge';
+      b.textContent = '📅 Calendar';
+      b.href = task.calendarEventLink;
+      b.target = '_blank';
+      b.rel = 'noopener';
+      badges.appendChild(b);
+    }
+    li.appendChild(badges);
+  }
 
   li.addEventListener('dragstart', (e) => {
     e.dataTransfer.setData('text/plain', String(task.id));

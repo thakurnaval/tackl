@@ -223,11 +223,19 @@ body {
   border-radius: 8px;
   padding: 5px 8px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 7px;
   cursor: grab;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
   font-size: 13px;
+}
+
+.task-badges {
+  flex-basis: 100%;
+  display: flex;
+  gap: 10px;
+  padding-left: 25px;
 }
 
 .task-card.dragging {
@@ -414,6 +422,64 @@ body {
 
 .delete-account-link:hover {
   color: #c0392b;
+}
+
+.backup-link {
+  position: absolute;
+  top: 44px;
+  right: 4px;
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 10px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.backup-link:hover {
+  color: #2f6fed;
+}
+
+/* Shared floating popovers for per-task actions (Delegate / Schedule), centered
+   since they aren't anchored to any one card. */
+.task-popover {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #e2ddd5;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.task-popover input,
+.task-popover textarea {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.task-popover input:focus,
+.task-popover textarea:focus {
+  border-color: #2f6fed;
+}
+
+.task-badge {
+  font-size: 10px;
+  color: #666;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 /* Small popover anchored under the sign-in button, not a full-page overlay */

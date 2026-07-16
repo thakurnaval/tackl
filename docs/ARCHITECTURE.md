@@ -13,7 +13,7 @@ graph TB
         AuthJS["auth.js<br/>(Firebase Auth SDK)"]
         ApiJS["api.js<br/>(fetch client, Firestore-backed)"]
         LocalStore["local-store.js<br/>(localStorage, guest mode)"]
-        GoogleApi["google-api.js<br/>(planned: Calendar/Tasks calls)"]
+        GoogleApi["google-api.js<br/>(Calendar/Tasks calls)"]
     end
 
     subgraph CloudRun["Google Cloud Run — service: tackl (asia-southeast1)"]
@@ -27,7 +27,7 @@ graph TB
         FireHosting["navalthakur.firebaseapp.com<br/>(OAuth popup handler only)"]
     end
 
-    subgraph GoogleAPIs["Google APIs (planned, called directly from browser)"]
+    subgraph GoogleAPIs["Google APIs (called directly from browser)"]
         Calendar["Calendar API"]
         Tasks["Google Tasks API"]
     end
@@ -59,7 +59,7 @@ graph TB
   first.
 - **Guest mode is entirely client-side** (`local-store.js`, `localStorage`) — no server round-trip,
   no account needed.
-- **Google Calendar/Tasks calls (planned) bypass the server entirely** — the browser calls Google's
+- **Google Calendar/Tasks calls bypass the server entirely** — the browser calls Google's
   APIs directly with a short-lived OAuth access token. The server only persists the small resulting
   metadata (event ID, etc.) afterward.
 
@@ -83,9 +83,9 @@ flowchart TD
     Migrate --> SignedIn["Signed-in session\n(tasks now in Firestore)"]
     SignedIn --> Actions
 
-    Quadrant -->|"Q3: Delegate (planned)"| Delegate["mailto: link opens\nrecipient's email pre-filled"]
-    Quadrant -->|"Q2: Schedule (planned, Google sign-in only)"| Schedule["Pick datetime →\nreal Google Calendar event created"]
-    SignedIn -->|"Backup (planned, Google sign-in only)"| Backup["Mirror task list into\nGoogle Tasks list 'Tackl'"]
+    Quadrant -->|"Q3: Delegate"| Delegate["mailto: link opens\nrecipient's email pre-filled"]
+    Quadrant -->|"Q2: Schedule (Google sign-in only)"| Schedule["Pick datetime →\nreal Google Calendar event created"]
+    SignedIn -->|"Backup (Google sign-in only)"| Backup["Mirror task list into\nGoogle Tasks list 'Tackl'"]
 ```
 
 ## 3. Data flow: task CRUD (signed-in user)
@@ -188,12 +188,12 @@ erDiagram
         int completed "0 or 1"
         int position "order within quadrant"
         timestamp createdAt
-        string delegatedTo "planned"
-        timestamp delegatedAt "planned"
-        string calendarEventId "planned"
-        string calendarEventLink "planned"
-        timestamp scheduledAt "planned"
-        string googleTaskId "planned"
+        string delegatedTo
+        timestamp delegatedAt
+        string calendarEventId
+        string calendarEventLink
+        timestamp scheduledAt
+        string googleTaskId
     }
 ```
 

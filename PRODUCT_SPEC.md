@@ -41,43 +41,51 @@ action, not just a label:
 - [x] Meaningful auth error messages (no raw Firebase error codes shown to users)
 - [x] Custom domain `tackl.nthakur.com` — Cloud Run domain mapping live, DNS propagated, TLS
       certificate provisioned. This is the canonical URL going forward.
+- [x] Privacy Policy + Terms of Service (`/privacy.html`, `/terms.html`) — see §4.4
+- [x] Self-service account deletion (`DELETE /api/account`) — see §4.1
+- [x] Google integrations: Delegate (mailto), Schedule (Calendar), Backup (Google Tasks) — see §3
 - [ ] Google sign-in provider — needs OAuth consent screen test users added for anyone besides the
       project owner while in Testing mode (see §4)
 
-## 3. Planned: Google integrations (Delegate / Schedule / Backup)
+## 3. Google integrations (Delegate / Schedule / Backup)
 
-Turns the three actionable quadrants into real actions. Full design lives in this section; treat it
-as the spec to implement against.
+Turns the three actionable quadrants into real actions.
 
-### 3.1 Delegate → `mailto:` link
+### 3.1 Delegate → `mailto:` link — shipped
 
-- No OAuth, no Google API call. Clicking **Delegate** on a task opens a small popover for a
-  recipient email + optional note, then builds and opens a `mailto:to@example.com?subject=...&body=...`
-  URL.
-- Works for **every** user — Google or email/password sign-in, no "connect Google" step.
+- [x] No OAuth, no Google API call. Clicking **Delegate** (✉) on a task opens a popover for a
+  recipient email + optional note, then opens a `mailto:to@example.com?subject=...&body=...` URL.
+- Works for **every** user — Google or email/password sign-in, no "connect Google" step. Verified
+  with Playwright in guest mode: popover opens, mailto URL is built and encoded correctly, and the
+  task shows a "✉ recipient@email" badge afterward.
 - Tradeoff: no delivery confirmation. Tackl only knows the mailto link was *opened*, not that the
   email was sent. The task is marked `delegatedTo` / `delegatedAt` at that point (intent, not proof).
 
-### 3.2 Schedule → Google Calendar event
+### 3.2 Schedule → Google Calendar event — shipped, needs live verification
 
-- Google sign-in only. Clicking **Schedule** on a task opens a popover with a native
-  `<input type="datetime-local">`, then creates a real event on the user's primary Google Calendar.
+- [x] Google sign-in only. Clicking **Schedule** (📅) on a task opens a popover with a native
+  `<input type="datetime-local">`, then creates a real event (30-minute block) on the user's primary
+  Google Calendar. Task gets `calendarEventId` / `calendarEventLink` / `scheduledAt`; the card shows
+  a "📅 Calendar" badge linking to the event.
+- Non-Google users get a clear message ("Schedule needs a Google account...") instead of the
+  popover — verified with Playwright.
 - Requires the `https://www.googleapis.com/auth/calendar.events` OAuth scope, requested
-  incrementally (not at initial sign-in — only the first time Schedule or Backup is used).
-- Task gets `calendarEventId` / `calendarEventLink` / `scheduledAt`; the card shows a calendar-link
-  badge.
+  incrementally the first time Schedule or Backup is used in a session.
+- **Not yet verified live** — needs an actual Google sign-in + consent popup, which can't be
+  automated. Try it and report back; if Google blocks the scope grant (Testing-mode consent screen
+  issue), see §3.5.
 
-### 3.3 Backup → Google Tasks
+### 3.3 Backup → Google Tasks — shipped, needs live verification
 
-- Google sign-in only. A "Backup to Google Tasks" button (near sign-out) mirrors the current task
-  list into a dedicated "Tackl" list in the user's Google Tasks.
+- [x] Google sign-in only. A "Backup to Google Tasks" link (near sign-out, Google users only)
+  mirrors the current task list into a dedicated "Tackl" list in the user's Google Tasks.
 - One-way (Tackl → Google Tasks), on-demand — not continuous background sync (no server-side token
   storage, so nothing can run without the tab open).
 - Re-running Backup upserts (via a stored `googleTaskId` per task) instead of duplicating.
 - Tasks that have been Scheduled (§3.2) carry their `scheduledAt` over as the Google Task's `due`
   date — this is what gives Google Tasks a "timeline" view of Tackl's workload.
 - Requires the `https://www.googleapis.com/auth/tasks` OAuth scope, same incremental-auth pattern
-  as Schedule.
+  as Schedule. **Not yet verified live** — same caveat as §3.2.
 
 ### 3.4 Architecture
 
@@ -95,8 +103,10 @@ as the spec to implement against.
 
 ### 3.5 GCP/Console setup required
 
-- [ ] `gcloud services enable calendar-json.googleapis.com tasks.googleapis.com --project=navalthakur`
-- [ ] Add `calendar.events` and `tasks` to the OAuth consent screen's scope list
+- [x] `gcloud services enable calendar-json.googleapis.com tasks.googleapis.com --project=navalthakur`
+- [ ] Add `calendar.events` and `tasks` to the OAuth consent screen's scope list — no clean REST/
+      gcloud path found (same as the Google sign-in provider setup earlier); only needed if the live
+      test in §3.2/§3.3 actually fails with a scope/consent error.
 - [ ] Add test-user emails under OAuth consent screen → Test users (Testing mode, max 100, until
       full Google verification is pursued — see §4.4)
 

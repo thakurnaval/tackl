@@ -27,4 +27,5 @@ export const api = {
   moveTask: (id, important, urgent, newIndex) =>
     request('PATCH', `/api/tasks/${id}/move`, { important, urgent, newIndex }),
   deleteAccount: () => request('DELETE', '/api/account'),
+  updateTaskMeta: (id, fields) => request('PATCH', `/api/tasks/${id}/meta`, fields),
 };

@@ -55,6 +55,27 @@ async function updateTaskText(uid, id, text) {
   await tasksRef(uid).doc(id).update({ text: text.trim() });
 }
 
+// Sidecar metadata written by the Google integrations (delegate/schedule/backup).
+// Whitelisted so this generic endpoint can't be used to smuggle in writes to the
+// quadrant/position/completed fields that the transactional helpers above manage.
+const META_FIELDS = [
+  'delegatedTo',
+  'delegatedAt',
+  'calendarEventId',
+  'calendarEventLink',
+  'scheduledAt',
+  'googleTaskId',
+];
+
+async function updateTaskMeta(uid, id, fields) {
+  const update = {};
+  for (const key of META_FIELDS) {
+    if (key in fields) update[key] = fields[key];
+  }
+  if (Object.keys(update).length === 0) return;
+  await tasksRef(uid).doc(id).update(update);
+}
+
 async function setCompleted(uid, id, completed) {
   const nextCompleted = completed ? 1 : 0;
   const ref = tasksRef(uid);
@@ -158,6 +179,7 @@ module.exports = {
   getAllTasks,
   addTask,
   updateTaskText,
+  updateTaskMeta,
   setCompleted,
   deleteTask,
   deleteAllTasks,

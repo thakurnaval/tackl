@@ -17,6 +17,28 @@
     <button id="sign-in-btn" class="corner-btn" type="button">Sign in</button>
     <button id="sign-out" class="corner-btn" type="button" hidden>Sign out (<span id="user-email"></span>)</button>
     <button id="delete-account-btn" class="delete-account-link" type="button" hidden>Delete account</button>
+    <button id="backup-btn" class="backup-link" type="button" hidden>Backup to Google Tasks</button>
+
+    <section id="delegate-popover" class="task-popover" hidden>
+      <div class="auth-popover-head">
+        <h2>Delegate task</h2>
+        <button id="delegate-close" type="button" class="auth-close-btn" aria-label="Close">×</button>
+      </div>
+      <input type="email" id="delegate-email" placeholder="Recipient email" required />
+      <textarea id="delegate-note" placeholder="Note (optional)" rows="3"></textarea>
+      <p id="delegate-error" class="auth-error"></p>
+      <button id="delegate-send" type="button" class="auth-google-btn">Open email</button>
+    </section>
+
+    <section id="schedule-popover" class="task-popover" hidden>
+      <div class="auth-popover-head">
+        <h2>Schedule task</h2>
+        <button id="schedule-close" type="button" class="auth-close-btn" aria-label="Close">×</button>
+      </div>
+      <input type="datetime-local" id="schedule-datetime" required />
+      <p id="schedule-error" class="auth-error"></p>
+      <button id="schedule-save" type="button" class="auth-google-btn">Add to Google Calendar</button>
+    </section>
 
     <section id="auth-popover" class="auth-popover" hidden>
       <form id="auth-form" class="auth-form">

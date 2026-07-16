@@ -77,6 +77,13 @@ export const localStore = {
     save(load().filter((t) => t.id !== id));
   },
 
+  async updateTaskMeta(id, fields) {
+    const tasks = load();
+    const task = tasks.find((t) => t.id === id);
+    if (task) Object.assign(task, fields);
+    save(tasks);
+  },
+
   async moveTask(id, important, urgent, newIndex) {
     const tasks = load();
     const task = tasks.find((t) => t.id === id);
