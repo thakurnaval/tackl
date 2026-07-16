@@ -57,11 +57,16 @@
           <button id="auth-signup" type="button">Create account</button>
         </div>
         <button id="auth-google" type="button" class="auth-google-btn">Sign in with Google</button>
+        <button id="auth-forgot" type="button" class="auth-forgot-link">Forgot password?</button>
       </form>
     </section>
   </header>
 
   <p id="guest-banner" class="guest-banner">Guest mode — tasks are saved on this device only. Sign in to save them to your account.</p>
+  <p id="verify-banner" class="guest-banner" hidden>
+    Verify your email to secure your account — check your inbox, or
+    <button id="resend-verification" type="button" class="inline-link-btn">resend the email</button>.
+  </p>
 
   <div id="app-view">
   <div class="matrix-wrap">

@@ -546,6 +546,10 @@ body {
   min-height: 14px;
 }
 
+.auth-error.success {
+  color: #2f7d3c;
+}
+
 .auth-actions {
   display: flex;
   gap: 8px;
@@ -570,6 +574,26 @@ body {
 
 .auth-google-btn {
   width: 100%;
+}
+
+.auth-forgot-link {
+  align-self: center;
+  border: none;
+  background: none;
+  color: #666;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inline-link-btn {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
 }
 
 .app-footer {

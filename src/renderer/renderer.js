@@ -9,6 +9,9 @@ import {
   signInWithGoogle,
   signOutUser,
   isGoogleUser,
+  resetPassword,
+  resendVerificationEmail,
+  isEmailVerified,
 } from './auth.js';
 import { createCalendarEvent, backupTasksToGoogleTasks } from './google-api.js';
 
@@ -16,6 +19,8 @@ const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const guestBanner = document.getElementById('guest-banner');
+const verifyBanner = document.getElementById('verify-banner');
+const resendVerificationBtn = document.getElementById('resend-verification');
 
 // Tasks are stored locally (guest) until someone signs in, then switch to Firestore.
 let store = localStore;
@@ -31,6 +36,7 @@ const authPassword = document.getElementById('auth-password');
 const authError = document.getElementById('auth-error');
 const authSubmitBtn = document.getElementById('auth-signin');
 const authSignUpBtn = document.getElementById('auth-signup');
+const authForgotBtn = document.getElementById('auth-forgot');
 const googleBtn = document.getElementById('auth-google');
 const signOutBtn = document.getElementById('sign-out');
 const deleteAccountBtn = document.getElementById('delete-account-btn');
@@ -54,10 +60,12 @@ const AUTH_ERROR_MESSAGES = {
 };
 
 function showError(err) {
+  authError.classList.remove('success');
   authError.textContent = AUTH_ERROR_MESSAGES[err.code] || err.message || String(err);
 }
 
 function openPopover() {
+  authError.classList.remove('success');
   authError.textContent = '';
   authPopover.hidden = false;
 }
@@ -103,7 +111,37 @@ googleBtn.addEventListener('click', () => {
   authError.textContent = '';
   signInWithGoogle().catch(showError);
 });
+
+authForgotBtn.addEventListener('click', async () => {
+  authError.textContent = '';
+  const email = authEmail.value.trim();
+  if (!email) {
+    authError.textContent = 'Enter your email address above first.';
+    authEmail.focus();
+    return;
+  }
+  try {
+    await resetPassword(email);
+    authError.classList.add('success');
+    authError.textContent = `Password reset email sent to ${email}.`;
+  } catch (err) {
+    showError(err);
+  }
+});
+
 signOutBtn.addEventListener('click', () => signOutUser());
+
+resendVerificationBtn.addEventListener('click', async () => {
+  resendVerificationBtn.disabled = true;
+  resendVerificationBtn.textContent = 'sending…';
+  try {
+    await resendVerificationEmail();
+    resendVerificationBtn.textContent = 'sent!';
+  } catch {
+    resendVerificationBtn.textContent = 'resend the email';
+    resendVerificationBtn.disabled = false;
+  }
+});
 
 deleteAccountBtn.addEventListener('click', async () => {
   const confirmed = confirm(
@@ -261,6 +299,9 @@ watchAuthState(async (user) => {
     deleteAccountBtn.hidden = false;
     backupBtn.hidden = !isGoogleUser();
     guestBanner.hidden = true;
+    verifyBanner.hidden = isEmailVerified();
+    resendVerificationBtn.disabled = false;
+    resendVerificationBtn.textContent = 'resend the email';
     userEmailLabel.textContent = user.email || user.displayName || '';
     authEmail.value = '';
     authPassword.value = '';
@@ -273,6 +314,7 @@ watchAuthState(async (user) => {
     deleteAccountBtn.hidden = true;
     backupBtn.hidden = true;
     guestBanner.hidden = false;
+    verifyBanner.hidden = true;
     userEmailLabel.textContent = '';
     store = localStore;
   }

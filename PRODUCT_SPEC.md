@@ -124,24 +124,37 @@ Concrete gaps found while building the current version, plus the broader areas a
 needs. Roughly ordered by how soon each would actually bite.
 
 ### 4.1 Account & auth
-- [ ] Password reset flow (only sign in/sign up/Google exist today)
+- [x] Password reset flow — "Forgot password?" link in the sign-in popover calls Firebase's
+      `sendPasswordResetEmail` (`src/renderer/auth.js`, wired in `renderer.js`).
 - [x] Account deletion that also deletes the user's Firestore data — `DELETE /api/account`
       (`src/server.js`, `src/db.js`), triggered by the "Delete account" link near sign-out.
       Verified end-to-end: task data and the Firebase Auth user are both actually gone afterward.
-- [ ] Email verification (optional, but standard)
+- [x] Email verification — verification email sent automatically on signup
+      (`sendEmailVerification`); a dismissable-by-verifying banner nudges unverified users to check
+      their inbox or resend, but nothing is blocked/enforced while unverified. Google accounts are
+      treated as pre-verified.
 
 ### 4.2 Security & reliability
-- [ ] Rate limiting on `/api/*` (currently unlimited — a valid token can hammer the API)
-- [ ] Input validation/size limits on task text and other fields
-- [ ] Error tracking (e.g. Sentry) — right now failures are only visible via `console.error` /
-      Cloud Logging, not proactively surfaced
-- [ ] Uptime monitoring/alerting on the Cloud Run service
-- [ ] Firestore backup/export strategy (Google's redundancy ≠ "undo a bad deploy that corrupted
-      data")
+- [x] Rate limiting on `/api/*` — `express-rate-limit`, 120 requests/minute per IP, in-memory
+      (`src/server.js`). Per-instance, not shared across Cloud Run replicas — acceptable at current
+      traffic; revisit (Firestore- or Redis-backed) if abuse becomes real.
+- [x] Input validation/size limits — task text capped at 500 characters (`server.js`, `db.js`),
+      Google-integration metadata fields capped at 2000 characters, request body capped at 20kb.
+- [x] Error tracking — GCP Error Reporting (`@google-cloud/error-reporting`), free, no third-party
+      account, active in production only (`NODE_ENV=production` set in `Dockerfile`; no-ops locally).
+- [x] Uptime monitoring/alerting — Cloud Monitoring uptime check against `tackl.nthakur.com` every 5
+      minutes from multiple regions, with an email alert policy (to navalthakur@gmail.com) on
+      failure. Set up via `gcloud monitoring uptime create` + `gcloud alpha monitoring policies
+      create` (not committed to the repo — lives in GCP console under Monitoring).
+- [ ] Firestore backup/export strategy — deliberately skipped for now (no real users yet); revisit
+      once there's actual data worth protecting.
 
 ### 4.3 Performance & scale
-- [ ] Pagination for `getAllTasks` (currently loads the entire list unpaginated — fine at dozens of
-      tasks, not at thousands)
+- [x] Safety cap on task loading — not true pagination (this is a 4-quadrant board, not a scrolling
+      list, so "page 2" doesn't fit the UX). `getAllTasks` now queries each quadrant separately with
+      a 150-task cap per quadrant (`db.js`), so one overloaded quadrant can't starve the other three
+      out of the response. `moveTask`/`setCompleted` are intentionally *not* capped — they need the
+      full real dataset to re-sequence positions correctly.
 - [ ] Firestore read/write cost monitoring as usage grows
 
 ### 4.4 Legal & compliance
@@ -152,7 +165,11 @@ needs. Roughly ordered by how soon each would actually bite.
 - [x] Terms of Service — live at [`/terms.html`](https://tackl.nthakur.com/terms.html)
       (`src/renderer/terms.html`). Same caveat — legal review still needed, and §10 (governing law)
       is a placeholder that needs a real jurisdiction filled in.
-- [ ] GDPR/CCPA considerations if serving EU/CA users
+- [x] GDPR/CCPA sections added to the Privacy Policy — international transfer disclosure (data
+      lives in Singapore), EU/UK/EEA data-subject rights (access/correct/delete/restrict/port/
+      object, right to complain to a supervisory authority), and California CCPA/CPRA rights
+      (know/delete/correct/non-discrimination, explicit "we don't sell or share" statement). Still
+      not a substitute for actual legal review, especially before serving EU/CA users at real scale.
 - [ ] Required before pursuing full Google OAuth verification (moves Delegate/Schedule/Backup out of
       the 100-test-user Testing-mode limit in §3.6)
 

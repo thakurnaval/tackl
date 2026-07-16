@@ -9,7 +9,9 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/error-reporting": "^3.0.6",
     "express": "^4.21.0",
+    "express-rate-limit": "^8.5.2",
     "firebase-admin": "^12.7.0"
   }
 }

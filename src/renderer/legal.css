@@ -51,6 +51,12 @@ h2 {
   margin-bottom: 8px;
 }
 
+h3 {
+  font-size: 15px;
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+
 p, li {
   font-size: 15px;
 }

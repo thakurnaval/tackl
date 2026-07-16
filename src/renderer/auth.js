@@ -7,6 +7,8 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
+  sendPasswordResetEmail,
+  sendEmailVerification,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { firebaseConfig } from './firebase-config.js';
 
@@ -18,8 +20,29 @@ export function watchAuthState(onChange) {
   onAuthStateChanged(auth, onChange);
 }
 
-export function signUp(email, password) {
-  return createUserWithEmailAndPassword(auth, email, password);
+export async function signUp(email, password) {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  // Best-effort: a signup that succeeds but fails to send the verification
+  // email shouldn't block the user from using the app.
+  sendEmailVerification(result.user).catch(() => {});
+  return result;
+}
+
+export function resetPassword(email) {
+  return sendPasswordResetEmail(auth, email);
+}
+
+export function resendVerificationEmail() {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Not signed in');
+  return sendEmailVerification(user);
+}
+
+export function isEmailVerified() {
+  const user = auth.currentUser;
+  // Google accounts are considered pre-verified (Google already verified the email).
+  if (!user) return false;
+  return user.emailVerified || isGoogleUser();
 }
 
 export function signIn(email, password) {

@@ -14,14 +14,32 @@ function tasksRef(uid) {
 
 // Quadrant is derived from (important, urgent). Position orders tasks within a quadrant.
 
+// Safety cap per quadrant (not true pagination — this is a 4-quadrant board, not a
+// scrolling list, so "page 2" doesn't make sense here). Capping per quadrant, rather
+// than one global limit, avoids a single busy quadrant starving the other three out
+// of the response entirely.
+const MAX_TASKS_PER_QUADRANT = 150;
+
 async function getAllTasks(uid) {
-  const snap = await tasksRef(uid)
-    .orderBy('important', 'desc')
-    .orderBy('urgent', 'desc')
-    .orderBy('completed', 'asc')
-    .orderBy('position', 'asc')
-    .get();
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const ref = tasksRef(uid);
+  const quadrants = [
+    [1, 1],
+    [1, 0],
+    [0, 1],
+    [0, 0],
+  ];
+  const snaps = await Promise.all(
+    quadrants.map(([important, urgent]) =>
+      ref
+        .where('important', '==', important)
+        .where('urgent', '==', urgent)
+        .orderBy('completed', 'asc')
+        .orderBy('position', 'asc')
+        .limit(MAX_TASKS_PER_QUADRANT)
+        .get()
+    )
+  );
+  return snaps.flatMap((snap) => snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
 }
 
 async function addTask(uid, text, important, urgent) {
@@ -67,10 +85,15 @@ const META_FIELDS = [
   'googleTaskId',
 ];
 
+const MAX_META_VALUE_LENGTH = 2000;
+
 async function updateTaskMeta(uid, id, fields) {
   const update = {};
   for (const key of META_FIELDS) {
-    if (key in fields) update[key] = fields[key];
+    if (!(key in fields)) continue;
+    const value = fields[key];
+    if (typeof value === 'string' && value.length > MAX_META_VALUE_LENGTH) continue;
+    update[key] = value;
   }
   if (Object.keys(update).length === 0) return;
   await tasksRef(uid).doc(id).update(update);
