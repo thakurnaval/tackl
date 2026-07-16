@@ -21,10 +21,17 @@ a {
 }
 
 .legal-header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   text-decoration: none;
   font-weight: 900;
   font-size: 20px;
   color: #1a1a1a;
+}
+
+.legal-header img {
+  border-radius: 6px;
 }
 
 .legal-meta {

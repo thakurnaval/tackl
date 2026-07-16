@@ -3,6 +3,8 @@ node_modules
 .github
 scripts
 misc
+img
+docs
 *.md
 .gitignore
 Dockerfile

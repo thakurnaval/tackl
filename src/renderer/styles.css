@@ -43,6 +43,12 @@ body {
   letter-spacing: 0.5px;
 }
 
+.app-logo {
+  display: block;
+  margin: 0 auto 2px;
+  border-radius: 8px;
+}
+
 .subtitle {
   font-size: 14px;
   color: #444;

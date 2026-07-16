@@ -1,4 +1,4 @@
-# Tackl
+<img src="img/tackl-logo.png" alt="Tackl" width="360" />
 
 **Live at: https://tackl.nthakur.com**
 
@@ -169,6 +169,7 @@ reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll
 
 - `PRODUCT_SPEC.md` — master product specification, requirements, and roadmap
 - `docs/ARCHITECTURE.md` — architecture, user flow, and data flow diagrams
+- `img/` — brand assets (source logo); app favicons/icons live in `src/renderer/assets/`
 - `src/server.js` — Express app: static file serving, `/api/tasks` REST routes, Firebase ID token
   verification
 - `src/db.js` — Firestore data layer, scoped per user: CRUD plus quadrant move/reorder
