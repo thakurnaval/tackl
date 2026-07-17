@@ -43,8 +43,8 @@ action, not just a label:
       certificate provisioned. This is the canonical URL going forward.
 - [x] Privacy Policy + Terms of Service (`/privacy.html`, `/terms.html`) — see §4.4
 - [x] Self-service account deletion (`DELETE /api/account`) — see §4.1
-- [x] Google integrations: Delegate (mailto, verified), Schedule (Calendar) and Backup (Google
-      Tasks) shipped but awaiting a live human test — see §3
+- [x] Google integrations: Delegate (mailto), Schedule (Calendar), Backup (Google Tasks) — all three
+      shipped and verified live — see §3
 - [x] Password reset + email verification (see §4.1)
 - [x] Rate limiting, input validation, GCP Error Reporting, uptime monitoring/alerting (see §4.2)
 - [x] Per-quadrant task loading cap for scale (see §4.3)
@@ -66,7 +66,7 @@ Turns the three actionable quadrants into real actions.
 - Tradeoff: no delivery confirmation. Tackl only knows the mailto link was *opened*, not that the
   email was sent. The task is marked `delegatedTo` / `delegatedAt` at that point (intent, not proof).
 
-### 3.2 Schedule → Google Calendar event — shipped, needs live verification
+### 3.2 Schedule → Google Calendar event — shipped, verified live
 
 - [x] Google sign-in only. Clicking **Schedule** (📅) on a task opens a popover with a native
   `<input type="datetime-local">`, then creates a real event (30-minute block) on the user's primary
@@ -76,11 +76,12 @@ Turns the three actionable quadrants into real actions.
   popover — verified with Playwright.
 - Requires the `https://www.googleapis.com/auth/calendar.events` OAuth scope, requested
   incrementally the first time Schedule or Backup is used in a session.
-- **Not yet verified live** — needs an actual Google sign-in + consent popup, which can't be
-  automated. Try it and report back; if Google blocks the scope grant (Testing-mode consent screen
-  issue), see §3.5.
+- **Verified live** 17 Jul 2026 by the project owner: signed in with Google, granted the incremental
+  scope, scheduled a task, and confirmed the event actually appears on Google Calendar. Worked
+  without needing the consent-screen scope declaration in §3.5 — the project owner has implicit
+  access to their own Testing-mode OAuth consent screen regardless of the test-user list.
 
-### 3.3 Backup → Google Tasks — shipped, needs live verification
+### 3.3 Backup → Google Tasks — shipped, verified live
 
 - [x] Google sign-in only. A "Backup to Google Tasks" link (near sign-out, Google users only)
   mirrors the current task list into a dedicated "Tackl" list in the user's Google Tasks.
@@ -90,7 +91,8 @@ Turns the three actionable quadrants into real actions.
 - Tasks that have been Scheduled (§3.2) carry their `scheduledAt` over as the Google Task's `due`
   date — this is what gives Google Tasks a "timeline" view of Tackl's workload.
 - Requires the `https://www.googleapis.com/auth/tasks` OAuth scope, same incremental-auth pattern
-  as Schedule. **Not yet verified live** — same caveat as §3.2.
+  as Schedule. **Verified live** 17 Jul 2026 by the project owner: confirmed the "Tackl" list and
+  its tasks actually appear in Google Tasks.
 
 ### 3.4 Architecture
 
@@ -109,11 +111,12 @@ Turns the three actionable quadrants into real actions.
 ### 3.5 GCP/Console setup required
 
 - [x] `gcloud services enable calendar-json.googleapis.com tasks.googleapis.com --project=navalthakur`
-- [ ] Add `calendar.events` and `tasks` to the OAuth consent screen's scope list — no clean REST/
-      gcloud path found (same as the Google sign-in provider setup earlier); only needed if the live
-      test in §3.2/§3.3 actually fails with a scope/consent error.
-- [ ] Add test-user emails under OAuth consent screen → Test users (Testing mode, max 100, until
-      full Google verification is pursued — see §4.4)
+- [x] Adding `calendar.events`/`tasks` to the OAuth consent screen's scope list turned out to be
+      unnecessary — the live test in §3.2/§3.3 succeeded without it, for the project owner.
+- [ ] Add test-user emails under OAuth consent screen → Test users — **still needed for anyone other
+      than the project owner**. The project owner has implicit access to their own Testing-mode app
+      regardless of the test-user list; other Google accounts will hit a consent-screen block until
+      explicitly added (max 100, until full Google verification is pursued — see §4.4).
 
 ### 3.6 Known limitations (by design)
 
@@ -231,8 +234,7 @@ Not a commitment, just a starting recommendation — revisit as priorities chang
 Done, in the order originally suggested:
 
 1. ~~§4.4 Legal (Privacy Policy + ToS)~~ — done, plus GDPR/CCPA sections added afterward.
-2. ~~§3 Google integrations~~ — Delegate shipped and verified; Schedule/Backup shipped, still
-   awaiting a live human test (§3.2/§3.3).
+2. ~~§3 Google integrations~~ — Delegate, Schedule, and Backup all shipped and verified live.
 3. ~~§4.1 Account & auth gaps~~ — password reset, account-deletion cleanup, and email verification
    all shipped and verified live.
 4. ~~§4.2 Security & reliability basics~~ — rate limiting, input validation, error tracking, and
@@ -242,7 +244,8 @@ Not started:
 
 5. Everything else in §4.5–§4.11 (monetization, teams/collaboration, notifications, onboarding/UX,
    automated testing, analytics, support), prioritized by actual user feedback once there are real
-   users.
+   users. Also: extending OAuth consent-screen access to non-owner users (§3.5) if this needs to
+   work for anyone besides the project owner before full Google verification.
 
 ## 6. Open questions
 
