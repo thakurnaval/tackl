@@ -43,7 +43,12 @@ action, not just a label:
       certificate provisioned. This is the canonical URL going forward.
 - [x] Privacy Policy + Terms of Service (`/privacy.html`, `/terms.html`) — see §4.4
 - [x] Self-service account deletion (`DELETE /api/account`) — see §4.1
-- [x] Google integrations: Delegate (mailto), Schedule (Calendar), Backup (Google Tasks) — see §3
+- [x] Google integrations: Delegate (mailto, verified), Schedule (Calendar) and Backup (Google
+      Tasks) shipped but awaiting a live human test — see §3
+- [x] Password reset + email verification (see §4.1)
+- [x] Rate limiting, input validation, GCP Error Reporting, uptime monitoring/alerting (see §4.2)
+- [x] Per-quadrant task loading cap for scale (see §4.3)
+- [x] GDPR/CCPA sections in the Privacy Policy (see §4.4)
 - [ ] Google sign-in provider — needs OAuth consent screen test users added for anyone besides the
       project owner while in Testing mode (see §4)
 
@@ -125,27 +130,40 @@ needs. Roughly ordered by how soon each would actually bite.
 
 ### 4.1 Account & auth
 - [x] Password reset flow — "Forgot password?" link in the sign-in popover calls Firebase's
-      `sendPasswordResetEmail` (`src/renderer/auth.js`, wired in `renderer.js`).
+      `sendPasswordResetEmail` (`src/renderer/auth.js`, wired in `renderer.js`). **Verified live**
+      17 Jul 2026: triggered a real `PASSWORD_RESET` oob code against the deployed project and
+      Firebase confirmed the email was sent.
 - [x] Account deletion that also deletes the user's Firestore data — `DELETE /api/account`
       (`src/server.js`, `src/db.js`), triggered by the "Delete account" link near sign-out.
-      Verified end-to-end: task data and the Firebase Auth user are both actually gone afterward.
+      **Verified live**: task data and the Firebase Auth user are both actually gone afterward
+      (confirmed twice — once at initial build, once again after the hardening batch below).
 - [x] Email verification — verification email sent automatically on signup
       (`sendEmailVerification`); a dismissable-by-verifying banner nudges unverified users to check
       their inbox or resend, but nothing is blocked/enforced while unverified. Google accounts are
-      treated as pre-verified.
+      treated as pre-verified. **Verified live** 17 Jul 2026: triggered a real `VERIFY_EMAIL` oob
+      code against the deployed project and Firebase confirmed the email was sent.
 
 ### 4.2 Security & reliability
 - [x] Rate limiting on `/api/*` — `express-rate-limit`, 120 requests/minute per IP, in-memory
       (`src/server.js`). Per-instance, not shared across Cloud Run replicas — acceptable at current
-      traffic; revisit (Firestore- or Redis-backed) if abuse becomes real.
+      traffic; revisit (Firestore- or Redis-backed) if abuse becomes real. **Verified live** 17 Jul
+      2026: 130 rapid requests against the deployed site returned 118×200 and 12×429 — the limit
+      actually triggers.
 - [x] Input validation/size limits — task text capped at 500 characters (`server.js`, `db.js`),
       Google-integration metadata fields capped at 2000 characters, request body capped at 20kb.
+      **Verified live**: oversized (600-char) and empty task text both correctly rejected with 400,
+      normal text still succeeds with 200.
 - [x] Error tracking — GCP Error Reporting (`@google-cloud/error-reporting`), free, no third-party
-      account, active in production only (`NODE_ENV=production` set in `Dockerfile`; no-ops locally).
+      account, active in production only (`NODE_ENV=production` set in `Dockerfile`; no-ops locally,
+      confirmed by the expected startup warning when run without it). Wired in and deployed; not yet
+      *observed* catching a real production error (nothing has failed yet) — will confirm the first
+      time something actually breaks, or by manually forcing one.
 - [x] Uptime monitoring/alerting — Cloud Monitoring uptime check against `tackl.nthakur.com` every 5
       minutes from multiple regions, with an email alert policy (to navalthakur@gmail.com) on
-      failure. Set up via `gcloud monitoring uptime create` + `gcloud alpha monitoring policies
-      create` (not committed to the repo — lives in GCP console under Monitoring).
+      failure. Created via `gcloud monitoring uptime create` + `gcloud alpha monitoring policies
+      create` (not committed to the repo — lives in GCP console under Monitoring, confirmed present
+      via `gcloud monitoring uptime list-configs`). Not yet observed firing a real alert (site hasn't
+      gone down since it was set up, which is the point).
 - [ ] Firestore backup/export strategy — deliberately skipped for now (no real users yet); revisit
       once there's actual data worth protecting.
 
@@ -154,7 +172,9 @@ needs. Roughly ordered by how soon each would actually bite.
       list, so "page 2" doesn't fit the UX). `getAllTasks` now queries each quadrant separately with
       a 150-task cap per quadrant (`db.js`), so one overloaded quadrant can't starve the other three
       out of the response. `moveTask`/`setCompleted` are intentionally *not* capped — they need the
-      full real dataset to re-sequence positions correctly.
+      full real dataset to re-sequence positions correctly. Shipped and exercised via normal task
+      CRUD during verification; **not stress-tested** with an actual 150+-task quadrant (no realistic
+      way to generate that safely against the live project right now).
 - [ ] Firestore read/write cost monitoring as usage grows
 
 ### 4.4 Legal & compliance
@@ -206,14 +226,23 @@ needs. Roughly ordered by how soon each would actually bite.
 
 ## 5. Suggested sequencing
 
-Not a commitment, just a starting recommendation — revisit as priorities change:
+Not a commitment, just a starting recommendation — revisit as priorities change.
 
-1. §4.4 Legal (Privacy Policy + ToS) — blocks both user trust and Google OAuth verification.
-2. §3 Google integrations — Delegate first (no dependencies), then Schedule, then Backup.
-3. §4.1 Account & auth gaps (password reset, account deletion cleanup) — low effort, real risk if
-   skipped.
-4. §4.2 Security & reliability basics (rate limiting, error tracking) — before real user growth.
-5. Everything else, prioritized by actual user feedback once there are real users.
+Done, in the order originally suggested:
+
+1. ~~§4.4 Legal (Privacy Policy + ToS)~~ — done, plus GDPR/CCPA sections added afterward.
+2. ~~§3 Google integrations~~ — Delegate shipped and verified; Schedule/Backup shipped, still
+   awaiting a live human test (§3.2/§3.3).
+3. ~~§4.1 Account & auth gaps~~ — password reset, account-deletion cleanup, and email verification
+   all shipped and verified live.
+4. ~~§4.2 Security & reliability basics~~ — rate limiting, input validation, error tracking, and
+   uptime monitoring all shipped; only Firestore backups deliberately deferred.
+
+Not started:
+
+5. Everything else in §4.5–§4.11 (monetization, teams/collaboration, notifications, onboarding/UX,
+   automated testing, analytics, support), prioritized by actual user feedback once there are real
+   users.
 
 ## 6. Open questions
 

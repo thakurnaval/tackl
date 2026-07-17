@@ -13,35 +13,55 @@ Tackl runs as a web app on **Google Cloud Run**, with per-user accounts via **Fi
 Authentication** and task data stored in **Firestore**.
 
 > **Product spec & roadmap:** see [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) for the full requirements —
-> what's shipped, what's planned (Gmail delegation, Calendar scheduling, Google Tasks backup), and
-> the broader roadmap toward a full product (billing, teams, notifications, legal, etc.). Keep it
-> updated as the single source of truth when scope changes.
+> what's shipped (including Delegate/Schedule/Backup, auth hardening, legal pages) and what's still
+> planned (billing, teams, notifications, etc.). Keep it updated as the single source of truth when
+> scope changes.
 >
 > **Diagrams:** see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system architecture,
 > user flow, and data flow diagrams.
 
 ## What it does
 
-Every task is sorted into one of four quadrants based on whether it's **important** and/or **urgent**:
+Every task is sorted into one of four quadrants based on whether it's **important** and/or **urgent**,
+and two of the quadrants connect to a real action, not just a label:
 
 | Quadrant | Important? | Urgent? | What to do |
 | --- | --- | --- | --- |
 | **Q1 — Do First** | Yes | Yes | Act on these immediately |
-| **Q2 — Schedule** | Yes | No | Designate time to work on these |
-| **Q3 — Delegate** | No | Yes | Find someone else to do these |
+| **Q2 — Schedule** | Yes | No | **Schedule** it — creates a real Google Calendar event |
+| **Q3 — Delegate** | No | Yes | **Delegate** it — opens a pre-filled email to whoever's taking it |
 | **Q4 — Eliminate** | No | No | Delete or reduce these completely |
+
+You can also **back up** your whole list to a dedicated list in Google Tasks at any time. See
+[`PRODUCT_SPEC.md` §3](PRODUCT_SPEC.md) for exactly how each integration works and its current
+verification status.
+
+## Features
+
+- Chat-based task entry, drag-and-drop reordering/re-quadranting
+- **Guest mode** — fully usable with no account, tasks stored in the browser only
+- Accounts via Firebase Authentication (email/password or Google), with password reset and email
+  verification
+- Google integrations: Delegate (mailto), Schedule (Calendar), Backup (Google Tasks) — Google sign-in
+  required for Schedule/Backup
+- Self-service account deletion
+- Rate limiting, input validation, error tracking, and uptime monitoring — see
+  [`PRODUCT_SPEC.md` §4.2](PRODUCT_SPEC.md)
 
 ## Architecture
 
 - **Frontend** (`src/renderer/`): plain HTML/CSS/JS, no build step. Firebase Web SDK is imported
   directly as an ES module from Google's CDN for sign-in; `api.js` talks to the backend over `fetch`,
-  attaching the signed-in user's Firebase ID token.
+  attaching the signed-in user's Firebase ID token. `local-store.js` mirrors the same interface
+  against `localStorage` for guest mode. `google-api.js` calls the Calendar/Tasks REST APIs directly
+  from the browser using a short-lived Google OAuth token.
 - **Backend** (`src/server.js`): an Express server that serves the frontend as static files and
   exposes a `/api/tasks` REST API. Every request is authenticated by verifying the caller's Firebase
-  ID token with the Firebase Admin SDK.
-- **Data** (`src/db.js`): Firestore, one `users/{uid}/tasks/{taskId}` collection per user. Firestore
-  security rules (`firestore.rules`) deny all direct client access — only the server (via the Admin
-  SDK) reads or writes data, after checking the request's uid.
+  ID token with the Firebase Admin SDK, then rate-limited and input-validated. Errors are reported to
+  GCP Error Reporting in production.
+- **Data** (`src/db.js`): Firestore, one `users/{uid}/tasks/{taskId}` collection per user, queried
+  per-quadrant with a safety cap. Firestore security rules (`firestore.rules`) deny all direct client
+  access — only the server (via the Admin SDK) reads or writes data, after checking the request's uid.
 
 ## Prerequisites
 
@@ -155,15 +175,42 @@ project):
 
 After that, every push to `main` deploys automatically — no further setup needed.
 
+## Monitoring & error tracking
+
+Errors are reported to **GCP Error Reporting** automatically in production (no setup needed — it's
+part of Cloud Logging, active whenever `NODE_ENV=production`, which the `Dockerfile` sets).
+
+An **uptime check** (every 5 minutes, from multiple regions) plus an **email alert policy** were set
+up once, directly in GCP, and aren't tracked in this repo:
+
+```bash
+gcloud monitoring uptime create "Tackl uptime" \
+  --resource-type=uptime-url --resource-labels=host=tackl.nthakur.com,project_id=navalthakur \
+  --protocol=https --path=/ --period=5 --timeout=10 --project=navalthakur
+
+gcloud alpha monitoring channels create --display-name="Your name (email)" --type=email \
+  --channel-labels=email_address=YOUR_EMAIL --project=navalthakur
+```
+
+Then create an alert policy referencing the uptime check's `check_id` and the channel above (see
+Cloud Console → Monitoring → Alerting, or `gcloud alpha monitoring policies create
+--policy-from-file`).
+
 ## Usage
 
-1. Sign in (or create an account) on the sign-in screen.
+1. Open the app — you're in **guest mode** immediately, no account needed. Sign in (top-right) any
+   time to save your tasks to an account; guest tasks migrate automatically when you do.
 2. Type a task in the chat box at the bottom and press **Enter**.
 3. Answer **"Is this important?"** and **"Is this urgent?"** with the **Yes / No** buttons.
 4. The task lands in the matching quadrant with a priority number.
 
 Drag tasks to reorder them within a quadrant or to move them between quadrants. Hover over a task to
-reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll when they fill up.
+reveal actions to complete (✓), edit (✎), delegate (✉), schedule (📅), and delete (✕). Quadrants
+scroll when they fill up.
+
+Delegate works for everyone (opens a pre-filled email — no account needed); Schedule and the
+"Backup to Google Tasks" link require signing in with Google specifically, since they call the
+Calendar/Tasks APIs and need a Google OAuth token.
 
 ## Project structure
 
@@ -172,13 +219,17 @@ reveal actions to complete (✓), edit (✎), and delete (✕). Quadrants scroll
 - `img/` — brand assets (source logo); app favicons/icons live in `src/renderer/assets/`
 - `src/server.js` — Express app: static file serving, `/api/tasks` REST routes, Firebase ID token
   verification
-- `src/db.js` — Firestore data layer, scoped per user: CRUD plus quadrant move/reorder
+- `src/db.js` — Firestore data layer, scoped per user: CRUD plus quadrant move/reorder, per-quadrant
+  safety cap on reads
 - `src/renderer/` — frontend (HTML/CSS/JS)
-  - `auth.js` — Firebase Authentication (sign in/up/out, Google sign-in)
-  - `api.js` — `fetch`-based client for the `/api/tasks` REST API
+  - `auth.js` — Firebase Authentication (sign in/up/out, Google sign-in, password reset, email
+    verification, incremental Google OAuth scopes for Calendar/Tasks)
+  - `api.js` — `fetch`-based client for the `/api/tasks` REST API (signed-in/Firestore-backed)
+  - `local-store.js` — same interface as `api.js`, backed by `localStorage` (guest mode)
+  - `google-api.js` — Calendar/Tasks REST API calls, made directly from the browser
   - `firebase-config.js` — Firebase web app config (fill in with your project's values)
-  - `renderer.js` — auth gating, chat entry flow, drag-and-drop matrix UI
-  - `privacy.html` / `terms.html` — Privacy Policy and Terms of Service (static pages)
+  - `renderer.js` — auth gating, chat entry flow, drag-and-drop matrix UI, Delegate/Schedule/Backup
+  - `privacy.html` / `terms.html` / `legal.css` — Privacy Policy and Terms of Service (static pages)
 - `Dockerfile` — container image used for Cloud Run deploys
 - `firestore.rules` / `firebase.json` — Firestore security rules (deny direct client access)
 - `.github/workflows/deploy.yml` — CI/CD: builds and deploys to Cloud Run on every push to `main`
