@@ -183,7 +183,7 @@ needs. Roughly ordered by how soon each would actually bite.
 ### 4.4 Legal & compliance
 - [x] Privacy Policy — live at [`/privacy.html`](https://tackl.nthakur.com/privacy.html)
       (`src/renderer/privacy.html`). Drafted to accurately reflect actual data practices; needs a
-      legal review before being fully relied on, and the `support@nthakur.com` contact address needs
+      legal review before being fully relied on, and the `contact@nthakur.com` contact address needs
       to actually exist.
 - [x] Terms of Service — live at [`/terms.html`](https://tackl.nthakur.com/terms.html)
       (`src/renderer/terms.html`). Same caveat — legal review still needed, and §10 (governing law)
